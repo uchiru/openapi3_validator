@@ -1,0 +1,20 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test api
+  description: OpenAPI 3.0 specification of shaman API
+paths:
+  /:
+    get:
+      description: foo
+      responses:
+        200:
+          description: foo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [foo]
+                properties:
+                  foo: { type: string }
+            text/plain: {}
