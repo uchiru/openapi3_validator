@@ -81,4 +81,24 @@ class Openapi3Validator
         Openapi3Parser.load_file(config.spec_path).tap(&:valid?).freeze
       end
   end
+
+  def self.validate(req, res)
+    meth      = req.request_method.downcase
+    path_spec = Openapi3Validator.spec.paths.match(req.path) || raise(Openapi3Validator::Errors::PathNotFound, "Can't find path spec for #{meth} #{req.path}")
+    meth_spec = path_spec.public_send(meth) || raise(Openapi3Validator::Errors::MethodNotFound, "Can't find method spec for #{meth} #{req.path}")
+    resp_spec = meth_spec.responses.find { |k, _| k == res.status.to_s }&.last || raise(Openapi3Validator::Errors::StatusNotFound, "Can't find matching status in spec: #{meth} #{req.path} -> #{res.status}")
+
+    schema = resp_spec.content['application/json']&.schema&.to_h
+    if schema
+      begin
+        JSON::Validator.validate!(schema, res.body)
+      rescue JSON::Schema::ValidationError => e
+        require 'pp'
+        e.message += "\nSchema: #{schema.pretty_inspect}"
+        raise e
+      end
+    else
+      res.body.size.zero? || raise(Openapi3Validator::Errors::ExpectedNoContent, "#{meth} #{req.path} -> #{res.status}\nGot body: #{res.body.inspect}")
+    end
+  end
 end

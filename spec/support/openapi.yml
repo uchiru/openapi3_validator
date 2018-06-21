@@ -40,3 +40,42 @@ paths:
                     properties:
                       id: { type: integer }
 
+  /bad_status:
+    get:
+      description: foo
+      responses:
+        200:
+          description: foo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [foo]
+                properties:
+                  foo: { type: string }
+  /bad_type:
+    get:
+      description: foo
+      responses:
+        200:
+          description: foo
+          content:
+            application/xml:
+              schema:
+                type: object
+                required: [foo]
+                properties:
+                  foo: { type: string }
+  /bad_schema:
+    get:
+      description: foo
+      responses:
+        200:
+          description: foo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [foo]
+                properties:
+                  foo: { type: string }

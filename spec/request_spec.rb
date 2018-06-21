@@ -4,9 +4,15 @@ def app
   lambda do |env|
     case env.fetch('PATH_INFO')
     when '/'
-      [200, { 'Content-Type' => 'application/json'}, ['{"foo": "bar"}']]
+      [200, { 'Content-Type' => 'application/json' }, ['{"foo": "bar"}']]
     when %r{/entities/[0-9]+}
-      [200, { 'Content-Type' => 'application/json'}, ['{"entity": {"id": 111}}']]
+      [200, { 'Content-Type' => 'application/json' }, ['{"entity": {"id": 111}}']]
+    when '/bad_status'
+      [418, { 'Content-Type' => 'application/json' }, ['{}']]
+    when '/bad_type'
+      [200, { 'Content-Type' => 'application/json' }, ['{}']]
+    when '/bad_schema'
+      [200, { 'Content-Type' => 'application/json' }, ['{"bar": []}']]
     else
       [404, { 'Content-Type' => 'text/plain'}, []]
     end
