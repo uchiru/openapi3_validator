@@ -5,6 +5,8 @@ def app
     case env.fetch('PATH_INFO')
     when '/'
       [200, { 'Content-Type' => 'application/json'}, ['{"foo": "bar"}']]
+    when %r{/entities/[0-9]+}
+      [200, { 'Content-Type' => 'application/json'}, ['{"entity": {"id": 111}}']]
     else
       [404, { 'Content-Type' => 'text/plain'}, []]
     end
@@ -16,6 +18,11 @@ describe 'Request validation' do
 
   it 'is ok when path, status, content-type and schema' do
     get '/'
+    expect(last_response).to match_api_spec(200)
+  end
+
+  it 'is ok with compound path' do
+    get '/entities/111'
     expect(last_response).to match_api_spec(200)
   end
 

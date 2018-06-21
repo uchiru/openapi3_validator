@@ -54,9 +54,8 @@ module Openapi3Parser::Nodes
     def match(path)
       path_segs = path.split('/')
       node_data.find do |key, _|
-        spec_segs = key.to_s.split('/').map { |seg| seg.include?('{') ? %r{[^/]+} : seg }
-
-        return false unless path_segs.size == spec_segs.size
+        spec_segs = key.split('/').map { |seg| seg.include?('{') ? %r{[^/]+} : seg }
+        next false unless path_segs.size == spec_segs.size
         spec_segs.zip(path_segs).all? { |a, b| a === b }
       end&.last
     end

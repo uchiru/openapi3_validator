@@ -18,3 +18,25 @@ paths:
                 properties:
                   foo: { type: string }
             text/plain: {}
+  /entities/{id}:
+    get:
+      description: get entity
+      parameters:
+        - name: id
+          in: path
+          schema: { type: integer }
+      responses:
+        200:
+          description: entity
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [entity]
+                properties:
+                  entity:
+                    type: object
+                    required: [id]
+                    properties:
+                      id: { type: integer }
+
