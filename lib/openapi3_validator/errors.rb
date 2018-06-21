@@ -7,5 +7,6 @@ class Openapi3Validator
     class StatusDoesNotMatch < Error; end
     class ContentTypeNotFound < Error; end
     class ExpectedNoContent < Error; end
+    class SchemaValidationFailed < Error; end
   end
 end

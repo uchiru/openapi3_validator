@@ -62,7 +62,7 @@ describe Openapi3Validator do
       get '/bad_schema'
       expect do
         Openapi3Validator.validate(last_request, last_response)
-      end.to raise_error(JSON::Schema::ValidationError)
+      end.to raise_error(Openapi3Validator::Errors::SchemaValidationFailed)
     end
   end
 end
