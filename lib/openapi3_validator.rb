@@ -70,16 +70,41 @@ end
 
 class Openapi3Validator
   def self.config
-    @config ||= Struct.new(:spec_path).new
+    @config ||=
+      begin
+        Struct.new(:spec) do
+          def spec=(spec)
+            @spec = spec_from_arbitrary_input(spec).tap(&:valid?).freeze
+          end
+
+          def spec
+            @spec || raise('Specify spec_path: Openapi3Validator.config.spec_path = ')
+          end
+
+          private
+
+          def spec_from_arbitrary_input(input)
+            case input
+            when String
+              file = input.size < 4096 && File.exist?(input) rescue nil
+              return Openapi3Parser.load_file(input) if file
+              uri = input.size < 4096 && URI(input) rescue nil
+              return Openapi3Parser.load_url(input) if uri
+              Openapi3Parser.load(input)
+            when Hash, IO
+              Openapi3Parser.load(input)
+            when Openapi3Parser::Document
+              input
+            else
+              raise ArgumentError, "Can't use input as a spec!"
+            end
+          end
+        end.new
+      end
   end
 
   def self.spec
-    @spec ||=
-      begin
-        config.spec_path || raise('Specify spec_path: Openapi3Validator.config.spec_path = ')
-        File.exist?(config.spec_path) || raise(Errno::ENOENT, config.spec_path)
-        Openapi3Parser.load_file(config.spec_path).tap(&:valid?).freeze
-      end
+    config.spec
   end
 
   def self.validate(req, res)

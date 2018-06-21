@@ -17,7 +17,7 @@
 require 'rack/test'
 require 'openapi3_validator/rspec/matchers'
 
-Openapi3Validator.config.spec_path = File.expand_path('../support/openapi.yml', __FILE__)
+Openapi3Validator.config.spec = File.expand_path('../support/openapi.yml', __FILE__)
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
