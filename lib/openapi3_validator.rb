@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'openapi3_parser'
 require 'openapi3_validator/errors'
 
@@ -108,7 +110,7 @@ class Openapi3Validator
   end
 
   def self.validate(req, res)
-    meth      = req.request_method.downcase
+    meth      = req.env['REQUEST_METHOD'].downcase
     path_spec = Openapi3Validator.spec.paths.match(req.path) || raise(Openapi3Validator::Errors::PathNotFound, "Can't find path spec for #{meth} #{req.path}")
     meth_spec = path_spec.public_send(meth) || raise(Openapi3Validator::Errors::MethodNotFound, "Can't find method spec for #{meth} #{req.path}")
     resp_spec = meth_spec.responses.find { |k, _| k == res.status.to_s }&.last || raise(Openapi3Validator::Errors::StatusNotFound, "Can't find matching status in spec: #{meth} #{req.path} -> #{res.status}")
