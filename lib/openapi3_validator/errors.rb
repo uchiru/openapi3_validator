@@ -1,10 +1,11 @@
 class Openapi3Validator
+  class Error < RuntimeError; end
   module Errors
-    class PathNotFound < RuntimeError; end
-    class MethodNotFound < RuntimeError; end
-    class StatusNotFound < RuntimeError; end
-    class StatusDoesNotMatch < RuntimeError; end
-    class ContentTypeNotFound < RuntimeError; end
-    class ExpectedNoContent < RuntimeError; end
+    class PathNotFound < Error; end
+    class MethodNotFound < Error; end
+    class StatusNotFound < Error; end
+    class StatusDoesNotMatch < Error; end
+    class ContentTypeNotFound < Error; end
+    class ExpectedNoContent < Error; end
   end
 end
