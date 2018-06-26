@@ -34,6 +34,12 @@ describe Openapi3Validator do
         Openapi3Validator.validate(last_request, last_response)
       end.not_to raise_error
     end
+    it 'passes if request/response are ok with query' do
+      get '/?query=foo'
+      expect do
+        Openapi3Validator.validate(last_request, last_response)
+      end.not_to raise_error
+    end
     it 'fails if no such path found in spec' do
       get '/nonsense'
       expect do
@@ -52,11 +58,23 @@ describe Openapi3Validator do
         Openapi3Validator.validate(last_request, last_response)
       end.to raise_error(Openapi3Validator::Errors::StatusNotFound)
     end
-    it 'fails if no such content-type found in spec and content is present' do
+    it 'fails if no such content-type found in spec' do
       get '/bad_type'
       expect do
         Openapi3Validator.validate(last_request, last_response)
+      end.to raise_error(Openapi3Validator::Errors::UnexpectedContentType)
+    end
+    it 'fails if empty content-type found and content is present', :focus do
+      get '/no_content'
+      expect do
+        Openapi3Validator.validate(last_request, last_response)
       end.to raise_error(Openapi3Validator::Errors::ExpectedNoContent)
+    end
+    it 'passes if non-empty content-type found with no schema and content is present' do
+      get '/content_and_no_schema'
+      expect do
+        Openapi3Validator.validate(last_request, last_response)
+      end.not_to raise_error
     end
     it 'fails if schema is invalid' do
       get '/bad_schema'

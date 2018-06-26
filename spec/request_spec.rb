@@ -13,6 +13,10 @@ def app
       [200, { 'Content-Type' => 'application/json' }, ['{}']]
     when '/bad_schema'
       [200, { 'Content-Type' => 'application/json' }, ['{"bar": []}']]
+    when '/no_content'
+      [200, { 'Content-Type' => 'text/plain' }, ['should not be here']]
+    when '/content_and_no_schema'
+      [200, { 'Content-Type' => 'text/plain' }, ['its okay']]
     else
       [404, { 'Content-Type' => 'text/plain'}, []]
     end
@@ -22,8 +26,15 @@ end
 describe 'Request validation' do
   include Rack::Test::Methods
 
-  it 'is ok when path, status, content-type and schema' do
+  it 'is ok when path, status, content-type and schema are ok' do
     get '/'
+    expect(last_response).to match_api_spec(200)
+  end
+
+  it 'is ok when path, status, content-type and schema are ok, and with query string' do
+    get '/?foo=bar'
+    expect(last_response).to match_api_spec(200)
+    get '/entities/111?query=bar'
     expect(last_response).to match_api_spec(200)
   end
 

@@ -114,18 +114,22 @@ class Openapi3Validator
     path_spec = Openapi3Validator.spec.paths.match(req.path) || raise(Errors::PathNotFound, "Can't find path spec for #{meth} #{req.path}")
     meth_spec = path_spec.public_send(meth) || raise(Errors::MethodNotFound, "Can't find method spec for #{meth} #{req.path}")
     resp_spec = meth_spec.responses.find { |k, _| k == res.status.to_s }&.last || raise(Errors::StatusNotFound, "Can't find matching status in spec: #{meth} #{req.path} -> #{res.status}")
-
-    schema = resp_spec.content['application/json']&.schema&.to_h
-    if schema
-      begin
-        JSON::Validator.validate!(schema, res.body)
-      rescue JSON::Schema::ValidationError => e
-        require 'pp'
-        e.message += "\nSchema: #{schema.pretty_inspect}"
-        raise Errors::SchemaValidationFailed, e.message
-      end
-    else
-      res.body.size.zero? || raise(Errors::ExpectedNoContent, "#{meth} #{req.path} -> #{res.status}\nGot body: #{res.body.inspect}")
+    if resp_spec.content.to_a.empty? && res.body.size.positive?
+      raise(Errors::ExpectedNoContent, "#{meth} #{req.path} -> #{res.status}\nGot body: #{res.body.inspect}")
+    end
+    type = res.headers['Content-Type']
+    if !type.nil? && resp_spec.content[type].nil?
+      raise(Errors::UnexpectedContentType, "#{meth} #{req.path} -> #{res.status} unexpected content type #{type}")
+    end
+    content = resp_spec.content[type]
+    schema = content&.schema&.to_h
+    return unless schema
+    begin
+      JSON::Validator.validate!(schema, res.body)
+    rescue JSON::Schema::ValidationError => e
+      require 'pp'
+      e.message += "\nSchema: #{schema.pretty_inspect}"
+      raise Errors::SchemaValidationFailed, e.message
     end
   end
 end

@@ -79,3 +79,20 @@ paths:
                 required: [foo]
                 properties:
                   foo: { type: string }
+
+  /no_content:
+    get: 
+      description: foo
+      responses:
+        200:
+          description: foo
+  
+  /content_and_no_schema:
+    get: 
+      description: foo
+      responses:
+        200:
+          description: foo
+          content:
+            text/plain: {}
+

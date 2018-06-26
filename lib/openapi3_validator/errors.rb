@@ -8,5 +8,6 @@ class Openapi3Validator
     class ContentTypeNotFound < Error; end
     class ExpectedNoContent < Error; end
     class SchemaValidationFailed < Error; end
+    class UnexpectedContentType < Error; end
   end
 end
