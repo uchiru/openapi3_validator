@@ -114,8 +114,12 @@ class Openapi3Validator
     path_spec = Openapi3Validator.spec.paths.match(req.path) || raise(Errors::PathNotFound, "Can't find path spec for #{meth} #{req.path}")
     meth_spec = path_spec.public_send(meth) || raise(Errors::MethodNotFound, "Can't find method spec for #{meth} #{req.path}")
     resp_spec = meth_spec.responses.find { |k, _| k == res.status.to_s }&.last || raise(Errors::StatusNotFound, "Can't find matching status in spec: #{meth} #{req.path} -> #{res.status}")
-    if resp_spec.content.to_a.empty? && res.body.size.positive?
-      raise(Errors::ExpectedNoContent, "#{meth} #{req.path} -> #{res.status}\nGot body: #{res.body.inspect}")
+    if resp_spec.content.to_a.empty?
+      if res.body.size.zero?
+        return
+      else
+        raise(Errors::ExpectedNoContent, "#{meth} #{req.path} -> #{res.status}\nGot body: #{res.body.inspect}")
+      end
     end
     type = res.headers['Content-Type']&.split(';')&.first
     if !type.nil? && resp_spec.content[type].nil?
