@@ -33,6 +33,10 @@ describe Openapi3Validator do
       expect do
         Openapi3Validator.validate(last_request, last_response)
       end.not_to raise_error
+      get '/complex_content_type'
+      expect do
+        Openapi3Validator.validate(last_request, last_response)
+      end.not_to raise_error
     end
     it 'passes if request/response are ok with query' do
       get '/?query=foo'

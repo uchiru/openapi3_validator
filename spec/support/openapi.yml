@@ -95,4 +95,16 @@ paths:
           description: foo
           content:
             text/plain: {}
-
+  /complex_content_type:
+    get:
+      description: foo
+      responses:
+        200:
+          description: foo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [foo]
+                properties:
+                  foo: { type: string }

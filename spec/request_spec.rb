@@ -17,6 +17,8 @@ def app
       [200, { 'Content-Type' => 'text/plain' }, ['should not be here']]
     when '/content_and_no_schema'
       [200, { 'Content-Type' => 'text/plain' }, ['its okay']]
+    when '/complex_content_type'
+      [200, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"foo": "bar"}']]
     else
       [404, { 'Content-Type' => 'text/plain'}, []]
     end
