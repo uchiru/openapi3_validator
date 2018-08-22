@@ -121,7 +121,7 @@ class Openapi3Validator
         raise(Errors::ExpectedNoContent, "#{meth} #{req.path} -> #{res.status}\nGot body: #{res.body.inspect}")
       end
     end
-    type = res.headers['Content-Type']&.split(';')&.first
+    type = (res.headers['Content-Type'] || res.headers['content-type'])&.split(';')&.first
     if !type.nil? && resp_spec.content[type].nil?
       raise(Errors::UnexpectedContentType, "#{meth} #{req.path} -> #{res.status} unexpected content type #{type}")
     end
