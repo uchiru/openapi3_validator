@@ -108,7 +108,7 @@ paths:
                 required: [foo]
                 properties:
                   foo: { type: string }
-  /with_default:
+  /foo:
     get:
       description: foo
       responses:

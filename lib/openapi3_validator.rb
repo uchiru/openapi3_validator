@@ -134,6 +134,8 @@ class Openapi3Validator
       require 'pp'
       e.message += "\nSchema: #{schema.pretty_inspect}"
       raise Errors::SchemaValidationFailed, e.message
+    rescue JSON::Schema::UriError => e
+      raise Errors::SchemaValidationFailed, e.message
     end
   end
 end
