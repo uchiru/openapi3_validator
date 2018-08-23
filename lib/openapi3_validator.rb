@@ -119,11 +119,13 @@ class Openapi3Validator
     req_spec = meth_spec.request_body
 
     # validate request
-    if req_spec && req.content_type == "application/json"
-      if req_spec.content && req_spec.content[req.content_type] && req_spec.content[req.content_type].schema
+    if req_spec && req_spec.content
+      if req_spec.content[req.content_type] && req_spec.content[req.content_type].schema
         schema = req_spec.content[req.content_type].schema.to_h
         begin
-          JSON::Validator.validate!(schema, JSON.load(req.body))
+          if req.content_type == "application/json"
+            JSON::Validator.validate!(schema, JSON.load(req.body))
+          end
         rescue JSON::Schema::ValidationError => e
           require 'pp'
           e.message += "\nSchema: #{schema.pretty_inspect}"
@@ -131,6 +133,8 @@ class Openapi3Validator
         rescue JSON::Schema::UriError => e
           raise Errors::RequestValidationFailed, e.message
         end
+      else
+        raise Errors::RequestValidationFailed, "Missed request schema for #{meth} #{req.path} #{req.content_type}"
       end
     end
 

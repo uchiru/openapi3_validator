@@ -139,11 +139,19 @@ describe Openapi3Validator do
         res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
         expect do
           Openapi3Validator.validate(req, res)
-        end.not_to raise_error
+        end.to raise_error(Openapi3Validator::Errors::RequestValidationFailed)
       end
 
       it 'failed if request is failed' do
         req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/json", body: JSON.dump(pet: {}))
+        res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
+        expect do
+          Openapi3Validator.validate(req, res)
+        end.to raise_error(Openapi3Validator::Errors::RequestValidationFailed)
+      end
+
+      it 'failed if request has unknown field' do
+        req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/json", body: JSON.dump(pet: {name: "Bob", "age": 62}))
         res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
         expect do
           Openapi3Validator.validate(req, res)
