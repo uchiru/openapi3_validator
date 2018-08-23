@@ -2,6 +2,7 @@
 
 require 'openapi3_parser'
 require 'openapi3_validator/errors'
+require 'json-schema'
 
 # TODO: refinements
 

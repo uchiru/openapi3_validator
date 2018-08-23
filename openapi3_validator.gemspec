@@ -11,5 +11,4 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "openapi3_parser", ["~> 0.3.0"]
   s.add_runtime_dependency "json-schema"
   s.add_development_dependency "rspec"
-  s.add_development_dependency "rack-test"
 end

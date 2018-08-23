@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    openapi3_validator (0.0.0.pre.dev1)
+    openapi3_validator (0.0.0.pre.dev2)
       json-schema
       openapi3_parser (~> 0.3.0)
 
@@ -15,9 +15,6 @@ GEM
       addressable (>= 2.4)
     openapi3_parser (0.3.0)
     public_suffix (3.0.2)
-    rack (2.0.4)
-    rack-test (0.8.2)
-      rack (>= 1.0, < 3)
     rspec (3.8.0)
       rspec-core (~> 3.8.0)
       rspec-expectations (~> 3.8.0)
@@ -37,7 +34,6 @@ PLATFORMS
 
 DEPENDENCIES
   openapi3_validator!
-  rack-test
   rspec
 
 BUNDLED WITH
