@@ -110,15 +110,13 @@ class Openapi3Validator
     config.spec
   end
 
-  def self.validate(req, res)
+  def self.validate_request(req)
     # prepare specs
     meth      = req.request_method.downcase
     path_spec = Openapi3Validator.spec.paths.match(req.path) || raise(Errors::PathNotFound, "Can't find path spec for #{meth} #{req.path}")
     meth_spec = path_spec.public_send(meth) || raise(Errors::MethodNotFound, "Can't find method spec for #{meth} #{req.path}")
-    resp_spec = (meth_spec.responses.find { |k, _| k == res.status.to_s } || meth_spec.responses.find { |k, _| k == 'default' })&.last || raise(Errors::StatusNotFound, "Can't find matching status in spec: #{meth} #{req.path} -> #{res.status}")
     req_spec = meth_spec.request_body
 
-    # validate request
     if req_spec && req_spec.content
       if req_spec.content[req.content_type] && req_spec.content[req.content_type].schema
         schema = req_spec.content[req.content_type].schema.to_h
@@ -137,6 +135,14 @@ class Openapi3Validator
         raise Errors::RequestValidationFailed, "Missed request schema for #{meth} #{req.path} #{req.content_type}"
       end
     end
+  end
+
+  def self.validate_response(req, res)
+    # prepare specs
+    meth      = req.request_method.downcase
+    path_spec = Openapi3Validator.spec.paths.match(req.path) || raise(Errors::PathNotFound, "Can't find path spec for #{meth} #{req.path}")
+    meth_spec = path_spec.public_send(meth) || raise(Errors::MethodNotFound, "Can't find method spec for #{meth} #{req.path}")
+    resp_spec = (meth_spec.responses.find { |k, _| k == res.status.to_s } || meth_spec.responses.find { |k, _| k == 'default' })&.last || raise(Errors::StatusNotFound, "Can't find matching status in spec: #{meth} #{req.path} -> #{res.status}")
 
     # content empty?
     if resp_spec.content.to_a.empty?

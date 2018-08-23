@@ -36,7 +36,7 @@ describe Openapi3Validator do
       res = OpenStruct.new(status: 200, body: '{"foo": "bar"}', headers: {'content-type' => 'application/json'})
 
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.not_to raise_error
     end
 
@@ -45,7 +45,7 @@ describe Openapi3Validator do
       res = OpenStruct.new(status: 200, body: '{"foo": "bar"}', headers: {'content-type' => 'application/json; charset=utf8'})
 
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.not_to raise_error
     end
 
@@ -54,7 +54,7 @@ describe Openapi3Validator do
       res = OpenStruct.new(status: 422, body: '{"error": "something wrong"}', headers: {'content-type' => 'application/json'})
 
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.not_to raise_error
     end
 
@@ -63,7 +63,7 @@ describe Openapi3Validator do
       res = OpenStruct.new(status: 404, body: '', headers: {'content-type' => 'application/json'})
 
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.to raise_error(Openapi3Validator::Errors::PathNotFound)
     end
 
@@ -72,7 +72,7 @@ describe Openapi3Validator do
       res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
 
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.to raise_error(Openapi3Validator::Errors::MethodNotFound)
     end
 
@@ -80,7 +80,7 @@ describe Openapi3Validator do
       req = OpenStruct.new(request_method: "GET", path: "/bad_status", content_type: "default", body: "") 
       res = OpenStruct.new(status: 418, body: '', headers: {'content-type' => 'application/json'})
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.to raise_error(Openapi3Validator::Errors::StatusNotFound)
     end
 
@@ -88,7 +88,7 @@ describe Openapi3Validator do
       req = OpenStruct.new(request_method: "GET", path: "/bad_type", content_type: "default", body: "") 
       res = OpenStruct.new(status: 200, body: '', headers: {'content-type' => 'application/json'})
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.to raise_error(Openapi3Validator::Errors::UnexpectedContentType)
     end
 
@@ -96,7 +96,7 @@ describe Openapi3Validator do
       req = OpenStruct.new(request_method: "GET", path: "/no_content", content_type: "default", body: "") 
       res = OpenStruct.new(status: 200, body: 'should not be here', headers: {'content-type' => 'text/plain'})
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.to raise_error(Openapi3Validator::Errors::ExpectedNoContent)
     end
 
@@ -104,7 +104,7 @@ describe Openapi3Validator do
       req = OpenStruct.new(request_method: "GET", path: "/content_and_no_schema", content_type: "default", body: "") 
       res = OpenStruct.new(status: 200, body: 'its ok', headers: {'content-type' => 'text/plain'})
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.not_to raise_error
     end
 
@@ -113,7 +113,7 @@ describe Openapi3Validator do
       res = OpenStruct.new(status: 200, body: '{"bar": []}', headers: {'content-type' => 'application/json'})
 
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.to raise_error(Openapi3Validator::Errors::SchemaValidationFailed)
     end
 
@@ -121,40 +121,37 @@ describe Openapi3Validator do
       req = OpenStruct.new(request_method: "GET", path: "/foo", content_type: "default", body: "") 
       res = OpenStruct.new(status: 200, body: '{"items":', headers: {'content-type' => 'application/json'})
       expect do
-        Openapi3Validator.validate(req, res)
+        Openapi3Validator.validate_response(req, res)
       end.to raise_error(Openapi3Validator::Errors::SchemaValidationFailed)
     end
 
     describe 'POST request' do
-      it 'passes if request is ok' do
+      it 'passes if POST request is ok' do
         req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/json", body: JSON.dump(pet: {name: "Bobby"}))
         res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
         expect do
-          Openapi3Validator.validate(req, res)
+          Openapi3Validator.validate_response(req, res)
         end.not_to raise_error
       end
 
-      it 'passes any not json request' do
+      it 'fails any not json request' do
         req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/x-www-form-urlencoded", body: "o_O")
-        res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
         expect do
-          Openapi3Validator.validate(req, res)
+          Openapi3Validator.validate_request(req)
         end.to raise_error(Openapi3Validator::Errors::RequestValidationFailed)
       end
 
-      it 'failed if request is failed' do
+      it 'fails if request is failed' do
         req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/json", body: JSON.dump(pet: {}))
-        res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
         expect do
-          Openapi3Validator.validate(req, res)
+          Openapi3Validator.validate_request(req)
         end.to raise_error(Openapi3Validator::Errors::RequestValidationFailed)
       end
 
-      it 'failed if request has unknown field' do
+      it 'fails if request has unknown field' do
         req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/json", body: JSON.dump(pet: {name: "Bob", "age": 62}))
-        res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
         expect do
-          Openapi3Validator.validate(req, res)
+          Openapi3Validator.validate_request(req)
         end.to raise_error(Openapi3Validator::Errors::RequestValidationFailed)
       end
     end
