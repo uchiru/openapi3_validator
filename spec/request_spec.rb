@@ -19,6 +19,8 @@ def app
       [200, { 'Content-Type' => 'text/plain' }, ['its okay']]
     when '/complex_content_type'
       [200, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"foo": "bar"}']]
+    when '/with_default'
+      [422, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"error": "something wrong"}']]
     else
       [404, { 'Content-Type' => 'text/plain'}, []]
     end
@@ -43,6 +45,11 @@ describe 'Request validation' do
   it 'is ok with compound path' do
     get '/entities/111'
     expect(last_response).to match_api_spec(200)
+  end
+
+  it 'is ok with status matched by default' do
+    get '/with_default'
+    expect(last_response).to match_api_spec(422)
   end
 
   it 'fails when status does not match' do
