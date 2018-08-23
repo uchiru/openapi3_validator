@@ -19,8 +19,15 @@ def app
       [200, { 'Content-Type' => 'text/plain' }, ['its okay']]
     when '/complex_content_type'
       [200, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"foo": "bar"}']]
-    when '/with_default'
-      [422, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"error": "something wrong"}']]
+    when '/foo'
+      case env.fetch('QUERY_STRING')
+      when 'mode=422'
+        [422, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"error": "something wrong"}']]
+      when 'mode=broken_body'
+        [200, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"items":']]
+      else
+        [200, { 'Content-Type' => 'application/json; charset=utf8' }, ['{"items": []}']]
+      end
     else
       [404, { 'Content-Type' => 'text/plain'}, []]
     end
@@ -48,7 +55,7 @@ describe 'Request validation' do
   end
 
   it 'is ok with status matched by default' do
-    get '/with_default'
+    get '/foo?mode=422'
     expect(last_response).to match_api_spec(422)
   end
 

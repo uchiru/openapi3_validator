@@ -86,5 +86,11 @@ describe Openapi3Validator do
         Openapi3Validator.validate(last_request, last_response)
       end.to raise_error(Openapi3Validator::Errors::SchemaValidationFailed)
     end
+    it 'fails if body is broken' do
+      get '/foo?mode=broken_body'
+      expect do
+        Openapi3Validator.validate(last_request, last_response)
+      end.to raise_error(Openapi3Validator::Errors::SchemaValidationFailed)
+    end
   end
 end
