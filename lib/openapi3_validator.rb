@@ -111,10 +111,30 @@ class Openapi3Validator
   end
 
   def self.validate(req, res)
+    # prepare specs
     meth      = req.request_method.downcase
     path_spec = Openapi3Validator.spec.paths.match(req.path) || raise(Errors::PathNotFound, "Can't find path spec for #{meth} #{req.path}")
     meth_spec = path_spec.public_send(meth) || raise(Errors::MethodNotFound, "Can't find method spec for #{meth} #{req.path}")
     resp_spec = (meth_spec.responses.find { |k, _| k == res.status.to_s } || meth_spec.responses.find { |k, _| k == 'default' })&.last || raise(Errors::StatusNotFound, "Can't find matching status in spec: #{meth} #{req.path} -> #{res.status}")
+    req_spec = meth_spec.request_body
+
+    # validate request
+    if req_spec && req.content_type == "application/json"
+      if req_spec.content && req_spec.content[req.content_type] && req_spec.content[req.content_type].schema
+        schema = req_spec.content[req.content_type].schema.to_h
+        begin
+          JSON::Validator.validate!(schema, JSON.load(req.body))
+        rescue JSON::Schema::ValidationError => e
+          require 'pp'
+          e.message += "\nSchema: #{schema.pretty_inspect}"
+          raise Errors::RequestValidationFailed, e.message
+        rescue JSON::Schema::UriError => e
+          raise Errors::RequestValidationFailed, e.message
+        end
+      end
+    end
+
+    # content empty?
     if resp_spec.content.to_a.empty?
       if res.body.size.zero?
         return
@@ -122,6 +142,8 @@ class Openapi3Validator
         raise(Errors::ExpectedNoContent, "#{meth} #{req.path} -> #{res.status}\nGot body: #{res.body.inspect}")
       end
     end
+
+    # find schema
     type = (res.headers['Content-Type'] || res.headers['content-type'])&.split(';')&.first
     if !type.nil? && resp_spec.content[type].nil?
       raise(Errors::UnexpectedContentType, "#{meth} #{req.path} -> #{res.status} unexpected content type #{type}")
@@ -129,6 +151,8 @@ class Openapi3Validator
     content = resp_spec.content[type]
     schema = content&.schema&.to_h
     return unless schema
+
+    # validate response
     begin
       JSON::Validator.validate!(schema, res.body)
     rescue JSON::Schema::ValidationError => e

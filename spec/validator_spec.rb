@@ -124,5 +124,31 @@ describe Openapi3Validator do
         Openapi3Validator.validate(req, res)
       end.to raise_error(Openapi3Validator::Errors::SchemaValidationFailed)
     end
+
+    describe 'POST request' do
+      it 'passes if request is ok' do
+        req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/json", body: JSON.dump(pet: {name: "Bobby"}))
+        res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
+        expect do
+          Openapi3Validator.validate(req, res)
+        end.not_to raise_error
+      end
+
+      it 'passes any not json request' do
+        req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/x-www-form-urlencoded", body: "o_O")
+        res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
+        expect do
+          Openapi3Validator.validate(req, res)
+        end.not_to raise_error
+      end
+
+      it 'failed if request is failed' do
+        req = OpenStruct.new(request_method: "POST", path: "/pets", content_type: "application/json", body: JSON.dump(pet: {}))
+        res = OpenStruct.new(status: 201, body: '', headers: {'content-type' => 'application/json'})
+        expect do
+          Openapi3Validator.validate(req, res)
+        end.to raise_error(Openapi3Validator::Errors::RequestValidationFailed)
+      end
+    end
   end
 end
