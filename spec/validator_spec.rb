@@ -92,5 +92,28 @@ describe Openapi3Validator do
         Openapi3Validator.validate(last_request, last_response)
       end.to raise_error(Openapi3Validator::Errors::SchemaValidationFailed)
     end
+
+    describe 'request validation' do
+      it 'passes if request is ok' do
+        post '/pets', JSON.dump(pet: {name: "Bobby"}), {
+          'HTTP_ACCEPT' => 'application/json',
+          'CONTENT_TYPE' => 'application/json'
+        }
+        expect do
+          p last_response
+          Openapi3Validator.validate(last_request, last_response)
+        end.not_to raise_error
+      end
+
+      it 'failed if request is failed' do
+        post '/pets', JSON.dump(pet: {name: "Bobby"}), {
+          'HTTP_ACCEPT' => 'application/json',
+          'CONTENT_TYPE' => 'application/json'
+        }
+        expect do
+          Openapi3Validator.validate(last_request, last_response)
+        end.to raise_error(Openapi3Validator::Errors::RequestValidationFailed)
+      end
+    end
   end
 end

@@ -9,5 +9,6 @@ class Openapi3Validator
     class ExpectedNoContent < Error; end
     class SchemaValidationFailed < Error; end
     class UnexpectedContentType < Error; end
+    class RequestValidationFailed < Error; end
   end
 end

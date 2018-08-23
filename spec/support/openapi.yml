@@ -130,3 +130,25 @@ paths:
                 required: [error]
                 properties:
                   error: { type: string }
+  /pets:
+    post:
+      summary: Create a pet
+      operationId: createPets
+      requestBody:
+        description: notice
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pet]
+              properties:
+                pet:
+                  type: object
+                  required: [name]
+                  properties:
+                    name:       { type: string }
+                    tag:        { type: string }
+      responses:
+        '201':
+          description: pet created

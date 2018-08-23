@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    openapi3_validator (0.0.0.pre.dev1)
+    openapi3_validator (0.0.0.pre.dev2)
       json-schema
       openapi3_parser (~> 0.3.0)
 
