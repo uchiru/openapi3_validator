@@ -14,10 +14,7 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
-require 'rack/test'
 require 'openapi3_validator/rspec/matchers'
-require_relative './support/test_app.rb'
-
 Openapi3Validator.config.spec = File.expand_path('../support/openapi.yml', __FILE__)
 
 RSpec.configure do |config|
