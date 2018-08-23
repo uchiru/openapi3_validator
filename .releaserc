@@ -1,0 +1,7 @@
+project:        OpenAPI3 Validator
+mode:           simplistic
+version_path:   VERSION
+changelog_path: CHANGELOG.md
+publish: false
+
+# vim: ft=yaml ts=2 sw=2 et
