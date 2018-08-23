@@ -1,0 +1,194 @@
+#!/usr/bin/env ruby
+
+require 'scanf'
+require 'yaml'
+require 'ostruct'
+
+CONFIG_PATH = File.expand_path('../../.releaserc', __FILE__)
+
+def config
+  @config ||=
+    begin
+      unless File.exist?(CONFIG_PATH)
+        msg = <<MSG
+  Нет файла конфигурации .releaserc!
+  Формат (YAML):
+
+    project:        Shaman                 # название проекта
+    mode:           advanced | simplistic  #
+    version_path:   VERSION                # путь до файла с версией
+    changelog_path: CHANGELOG.md           # путь до CHANGELOG. Markdown. Заголовки с датами и версиями писать не нужно.
+    publish:        true | false           # вызвать bin/publish с именем релиза после релиза (default: false)
+MSG
+        abort msg
+      end
+      OpenStruct.new(
+        YAML.safe_load(
+          File.read(CONFIG_PATH)
+        )
+      )
+    end
+end
+
+def simplistic?
+  config.mode == 'simplistic'
+end
+
+def git_branch
+  `git rev-parse --abbrev-ref HEAD`.chomp
+end
+
+current_version = File.read(config.version_path)
+major, minor, patch = current_version.split(".", 3).map(&:to_i)
+
+dev = current_version.scanf('%*[^-]-dev%d').last
+rc  = current_version.scanf('%*[^-]-rc%d').last
+
+if ARGV[0] == "patch" && !dev
+  if git_branch != "v#{major}.#{minor}"
+    abort "Вы должны быть в ветке v#{major}.#{minor}, чтобы сделать патч. " \
+          "Если ее нет, `git checkout -b v#{major}.#{minor}`."
+  end
+  version      = "#{major}.#{minor}.#{patch + 1}"
+
+elsif ARGV[0] == "dev" && dev && patch.zero?
+  version      = "#{major}.#{minor}.0-dev#{dev + 1}"
+
+elsif ARGV[0] == "rc" && !simplistic? && dev
+  version = "#{major}.#{minor}.0-rc0"
+
+elsif ARGV[0] == "rc" && !simplistic? && rc
+  version      = "#{major}.#{minor}.0-rc#{rc + 1}"
+
+elsif ARGV[0] == "minor" && (dev || rc) && patch.zero?
+  version      = "#{major}.#{minor}.0"
+  next_version = "#{major}.#{minor + 1}.0-dev0"
+
+elsif ARGV[0] == "flow"
+  puts <<DESC
+
+  Зарелизит новую версию:
+   - коммитит рабочую директорию, если есть что
+   - обновит шапку changelog;
+   - обновит файлы с версиями;
+   - создаст новую ветку (minor, rc);
+   - закоммитит и проставит тег (minor, patch, rc);
+   - начнет следующую версию (кроме patch) с обновлением файлов версий.
+
+  Патчи
+   Патч можно сделать только находясь в ветке v{minor}.{major}. В стабилизационной модели
+   релизная ветка создается автоматически. В упрощенной модели, если возможно, следует
+   релизить миноры.  В случае же, если требуется пофиксить что-то в предыдущей версии,
+   создайте ветку самостоятельно.
+
+  Flow:
+    A) \e[4mСТАБИЛИЗАЦИОННАЯ МОДЕЛЬ\e[0m
+
+          master            release branches
+      t│ * (0.1.0-dev0)
+      i│ * (0.1.0-dev0)
+      m│ * (0.1.0-dev0)
+      e│ | \e[32mdev\e[0m
+       v * (0.1.0-dev1)\e[2m[tag]\e[0m
+         | \e[32mdev\e[0m
+         * (0.1.0-dev2)\e[2m[tag]\e[0m
+         | \e[32mrc\e[0m
+         |\\---------------->* (0.1.0-rc0)\e[2m[tag][branch]\e[0m  новая ветка 0.0 (автоматически при rc или minor)
+         * (0.2.0-dev)      | \e[32mrc\e[0m
+         |                  * (0.1.0-rc1)\e[2m[tag]\e[0m
+         |    \e[2mc-pick\e[0m       /|
+         *<---------------/ | \e[32mminor\e[0m
+         |                  * (0.1.0)\e[2m[tag]\e[0m
+         |    \e[2mc-pick\e[0m       /|
+         *<---------------/ | \e[32mpatch\e[0m
+         * (0.2.0-dev)      * (0.1.1)\e[2m[tag]\e[0m              patch доступен только из ветки релиза, не из master
+         |    \e[2mc-pick\e[0m       /
+         *<---------------/
+         |
+         * (0.2.0-dev)
+         * (1.0.0-dev)                                  мажоры делаются \e[4mруками\e[0m
+
+
+    Б) \e[4mУПРОЩЕННАЯ МОДЕЛЬ\e[0m
+
+          master            release branches
+      t│ * (0.1.0-dev0)
+      i│ * (0.1.0-dev0)
+      m│ * (0.1.0-dev0)
+      e│ | \e[32mdev\e[0m
+       │ * (0.1.0-dev1)\e[2m[tag]\e[0m
+       v | \e[32mdev\e[0m
+         * (0.1.0-dev2)\e[2m[tag]\e[0m
+         |
+         | \e[32mminor\e[0m
+         |\\----------------> * (0.1.0)\e[2m[tag]\e[0m
+         * (0.2.0-dev0)
+
+DESC
+  exit
+else
+  puts "Текущая версия: #{current_version}"
+  puts
+  puts "Доступные команды:"
+  puts
+  if dev
+    puts "  ./bin/release minor   # => #{major}.#{minor}.0"
+    puts "  ./bin/release dev     # => #{major}.#{minor}.0-dev#{dev + 1}"
+    unless simplistic?
+      puts "  ./bin/release rc      # => #{major}.#{minor}.0-rc0"
+    end
+  elsif rc
+    puts "  ./bin/release minor   # => #{major}.#{minor}.0"
+    puts "  ./bin/release rc      # => #{major}.#{minor}.0-rc#{rc + 1}"
+  else
+    puts "  ./bin/release patch   # => #{major}.#{minor}.#{patch + 1}"
+  end
+  puts "  ./bin/release flow    - шпаргалка ;)"
+  exit
+end
+
+def exec(cmd)
+  puts "[exec] #{cmd}"
+  system cmd
+end
+
+puts "releasing version: #{version}"
+exec %(git add .)
+exec %(git commit -am"uncommitted changes before release #{version}")
+exec %(git pull --rebase)
+File.write(config.version_path, version)
+if version.split('-')[1].nil?
+  cl_header = "## #{config.project} #{version} (#{Time.now.strftime('%B %-d, %Y')}) ##\n\n"
+  rc_header = "## #{config.project} #{version} [not released yet] ##\n\n"
+  content = File.read(config.changelog_path)
+  if content.include?(rc_header)
+    content.sub!(rc_header, cl_header)
+  else
+    content = cl_header + content
+  end
+  File.write(config.changelog_path, content)
+elsif dev && version.split('-').last == 'rc0'
+  cl_header = "## #{config.project} #{version.split('-').first} [not released yet] ##\n\n"
+  File.write(config.changelog_path, cl_header + File.read(config.changelog_path)) if cl_header
+end
+
+exec %(git commit -am"Release #{version}")
+exec %(git tag v#{version})
+
+if version.split('-')[1].nil?
+  brch = version.split('.')[0..1].join('.')
+  exec %(git branch v#{brch})
+end
+
+exec %(git push)
+exec %(git push --tags)
+if next_version
+  File.write(config.version_path, next_version)
+  exec %(git commit -am"Start version #{next_version}")
+  exec %(git push)
+end
+if config.publish
+  exec %(#{File.expand_path("../publish", __FILE__)} v#{version})
+end
+
+puts "Done."
