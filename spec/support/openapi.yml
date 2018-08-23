@@ -108,3 +108,25 @@ paths:
                 required: [foo]
                 properties:
                   foo: { type: string }
+  /with_default:
+    get:
+      description: foo
+      responses:
+        200:
+          description: foo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array }
+        default:
+          description: bar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error: { type: string }
